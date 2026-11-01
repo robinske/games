@@ -71,7 +71,7 @@ header.top {
 #stage { position: relative; flex: 1; min-height: 0; }
 #c { position: absolute; inset: 0; width: 100%; height: 100%; display: block; touch-action: none; }
 nav.controls {
-  display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px;
+  display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; gap: 8px;
   padding-block: 10px 12px;
 }
 button {
@@ -133,6 +133,13 @@ button.solve:hover { background: #eef5ec; }
 #winStats { font-variant-numeric: tabular-nums; }
 @media (max-width: 360px) { button { font-size: 13.5px; } .stat.main .val { font-size: 26px; } }
 @media (prefers-reduced-motion: reduce) { #toast, button { transition: none; } }
+/* Home Screen app on iOS 26: the reported viewport stops short of the bottom of the screen, while vh
+   still covers all of it, and the system blurs a band just below the status bar. */
+@media (display-mode: standalone) {
+  html, body { height: 100vh; }
+  header.top { padding-top: 30px; }
+  nav.controls { padding-bottom: 4px; }
+}
 </style>
 
 </head>
@@ -151,7 +158,7 @@ button.solve:hover { background: #eef5ec; }
     <button id="bNew" type="button">New</button>
     <button id="bUndo" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 14 4 9l5-5"/><path d="M4 9h10.5a5.5 5.5 0 0 1 0 11H11"/></svg>Undo</button>
     <button id="bHint" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 18h6"/><path d="M10 22h4"/><path d="M12 2a7 7 0 0 0-4 12.7c.6.5 1 1.3 1 2.3h6c0-1 .4-1.8 1-2.3A7 7 0 0 0 12 2z"/></svg>Hint</button>
-    <button id="bDeal" type="button"><span id="dealLabel">Deal</span> <span id="dealsLeft" class="badge">5</span></button>
+    <button id="bSolve" type="button" class="solve" hidden>Auto solve</button>
   </nav>
 </div>
 
@@ -692,7 +699,7 @@ function runCompletions() {
     if (t !== undefined && !C[t].up) { C[t].up = true; delays[t] = n * 38; }
   }
   if (any) { sync(delays, 360); hud(); save(); }
-  setTimeout(() => { busy = false; if (S.done.length === 8) winGame(); else checkStuck(); }, any ? n * 38 + 420 : 0);
+  setTimeout(() => { busy = false; hud(); if (S.done.length === 8) winGame(); else checkStuck(); }, any ? n * 38 + 420 : 0);
 }
 function deal() {
   if (busy || S.won) return;
@@ -901,13 +908,7 @@ function hud() {
   $('score').textContent = S.score;
   $('moves').textContent = S.moves;
   $('runs').textContent = `${S.done.length}/8`;
-  const deals = Math.ceil(S.stock.length / 10);
-  const solvable = canAutoSolve();
-  $('dealsLeft').textContent = deals;
-  $('dealsLeft').hidden = solvable;
-  $('dealLabel').textContent = solvable ? 'Auto solve' : 'Deal';
-  $('bDeal').classList.toggle('solve', solvable);
-  $('bDeal').disabled = (!deals && !solvable) || S.won;
+  $('bSolve').hidden = !canAutoSolve() || busy;
   $('bUndo').disabled = !hist.length || S.won;
   $('bHint').disabled = S.won;
   $('sRestart').hidden = $('stRestart').hidden = !S.initial;
@@ -1005,7 +1006,7 @@ canvas.addEventListener('pointerup', e => endDrag(e, false));
 canvas.addEventListener('pointercancel', e => endDrag(e, true));
 window.addEventListener('blur', () => endDrag(null, true));
 
-$('bDeal').addEventListener('click', () => { if (canAutoSolve()) autoSolve(); else deal(); });
+$('bSolve').addEventListener('click', () => { $('bSolve').hidden = true; autoSolve(); });
 $('bUndo').addEventListener('click', undo);
 $('bHint').addEventListener('click', showHint);
 $('bNew').addEventListener('click', () => {
