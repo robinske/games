@@ -133,13 +133,14 @@ button.solve:hover { background: #eef5ec; }
 #winStats { font-variant-numeric: tabular-nums; }
 @media (max-width: 360px) { button { font-size: 13.5px; } .stat.main .val { font-size: 26px; } }
 @media (prefers-reduced-motion: reduce) { #toast, button { transition: none; } }
-/* Home Screen app on iOS 26: the reported viewport stops short of the bottom of the screen, while vh
-   still covers all of it, and the system blurs a band just below the status bar. */
+/* Home Screen app on iOS 26: the system blurs a band just below the status bar, so the header sits lower.
+   When iOS already keeps a strip free at the bottom (viewport shorter than the screen), skip the
+   home-indicator padding so the buttons don't float high above it. */
 @media (display-mode: standalone) {
-  html, body { height: 100vh; }
   header.top { padding-top: 30px; }
-  nav.controls { padding-bottom: 4px; }
 }
+:root.short-viewport { padding-bottom: 0 !important; }
+:root.short-viewport nav.controls { padding-bottom: 8px; }
 </style>
 
 </head>
@@ -1145,6 +1146,14 @@ function leaveDemo() {
 window.addEventListener('hashchange', () => {
   if (location.hash === '#autosolve-demo' && !DEMO) { DEMO = true; runDemo(); }
 });
+
+function checkViewport() {
+  const standalone = (window.matchMedia && matchMedia('(display-mode: standalone)').matches) || navigator.standalone;
+  const screenH = window.innerWidth < window.innerHeight ? Math.max(screen.width, screen.height) : Math.min(screen.width, screen.height);
+  document.documentElement.classList.toggle('short-viewport', !!standalone && screenH - window.innerHeight > 40);
+}
+checkViewport();
+window.addEventListener('resize', checkViewport);
 
 function start(data) {
   if (DEMO) {
