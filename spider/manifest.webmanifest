@@ -1,0 +1,16 @@
+{
+  "name": "Spider Solitaire",
+  "short_name": "Spider",
+  "description": "Two-suit Spider Solitaire that works offline.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#3d7c35",
+  "theme_color": "#3d7c35",
+  "icons": [
+    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

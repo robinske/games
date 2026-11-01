@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#3d7c35">
+<meta name="description" content="Card and table games for phones, playable offline.">
+<title>Games</title>
+<link rel="icon" type="image/png" href="favicon.png">
+<link rel="apple-touch-icon" href="spider/icon-180.png">
+<style>
+/* Layout: one column of game tiles on green felt, sized for a phone first. */
+:root {
+  --felt: #3d7c35;
+  --felt-dark: #2f6529;
+  --white: #ffffff;
+  --dim: rgba(255, 255, 255, 0.8);
+  --tile: rgba(0, 0, 0, 0.18);
+  --tile-hover: rgba(0, 0, 0, 0.26);
+  --ui: "Roboto", "Helvetica Neue", Arial, system-ui, sans-serif;
+  color-scheme: light;
+}
+* { box-sizing: border-box; }
+html { padding-top: env(safe-area-inset-top, 0px); padding-bottom: env(safe-area-inset-bottom, 0px); }
+body {
+  margin: 0;
+  min-height: 100vh;
+  background: var(--felt);
+  color: var(--white);
+  font-family: var(--ui);
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+}
+main { max-width: 560px; margin: 0 auto; padding-block: 40px 48px; display: flex; flex-direction: column; gap: 28px; }
+header h1 { margin: 0; font-size: 34px; font-weight: 700; letter-spacing: -0.01em; }
+header p { margin: 6px 0 0; color: var(--dim); font-size: 16px; line-height: 1.45; }
+ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 12px; }
+a.game {
+  display: grid; grid-template-columns: 72px 1fr auto; align-items: center; gap: 16px;
+  padding: 14px; border-radius: 18px; background: var(--tile);
+  color: inherit; text-decoration: none; transition: background 0.15s;
+}
+a.game:hover { background: var(--tile-hover); }
+a.game:focus-visible { outline: 3px solid var(--white); outline-offset: 2px; }
+a.game img { width: 72px; height: 72px; border-radius: 16px; display: block; }
+.info { min-width: 0; display: flex; flex-direction: column; gap: 4px; }
+.info strong { font-size: 19px; font-weight: 700; }
+.info span { color: var(--dim); font-size: 14.5px; line-height: 1.4; }
+.go { font-size: 26px; color: var(--dim); padding-right: 4px; }
+footer { color: var(--dim); font-size: 13.5px; line-height: 1.5; }
+@media (prefers-reduced-motion: reduce) { a.game { transition: none; } }
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <h1>Games</h1>
+    <p>Card games made for phones. Each one works offline once you add it to your Home Screen.</p>
+  </header>
+  <ul>
+    <li>
+      <a class="game" href="spider/">
+        <img src="spider/icon-192.png" alt="">
+        <div class="info">
+          <strong>Spider Solitaire</strong>
+          <span>Two suits. Undo, hints, restart and auto solve.</span>
+        </div>
+        <span class="go" aria-hidden="true">›</span>
+      </a>
+    </li>
+  </ul>
+  <footer>To install a game: open it, then Share → Add to Home Screen on iPhone, or ⋮ → Install app on Android.</footer>
+</main>
+</body>
+</html>
