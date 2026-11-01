@@ -530,7 +530,7 @@ function layout() {
   const offS = px(cw * 0.22), piles = Math.ceil(S.stock.length / 10);
   S.stock.forEach((id, s) => {
     const j = Math.floor(s / 10);
-    pos[id] = { x: right - cw - (piles - 1 - j) * offS, y: rowY, order: 600 + s * 3 };
+    pos[id] = { x: right - cw - 4 * offS + j * offS, y: rowY, order: 600 + s * 3 };   // fans out to the right
   });
   return { W, H, cw, ch, gap, left, right, top, rowY, totalW, colX, colDU, pos, offF, offS, piles, dpr };
 }
@@ -546,7 +546,7 @@ function drawBackground() {
   ctx.fillStyle = 'rgba(0,0,0,0.16)';
   for (const x of L.colX) { rr(ctx, x, L.top, L.cw, L.ch, rad); ctx.fill(); }
   rr(ctx, L.left, L.rowY, L.cw, L.ch, rad); ctx.fill();               // completed-runs slot
-  rr(ctx, L.right - L.cw, L.rowY, L.cw, L.ch, rad); ctx.fill();       // stock slot
+  rr(ctx, L.right - L.cw - 4 * L.offS, L.rowY, L.cw, L.ch, rad); ctx.fill();       // stock slot
 
   if (bgMesh) { bgMesh.material.map.dispose(); bgMesh.material.dispose(); scene.remove(bgMesh); }
   bgMesh = new THREE.Mesh(geo, new THREE.MeshBasicMaterial({ map: crispTex(cv), depthTest: false, depthWrite: false }));
@@ -936,8 +936,8 @@ function load(d) {
 function pt(e) { const r = canvas.getBoundingClientRect(); return { x: e.clientX - r.left, y: e.clientY - r.top }; }
 function hit(p) {
   if (S.stock.length) {
-    const x0 = L.right - L.cw - (L.piles - 1) * L.offS;
-    if (p.x >= x0 - L.gap && p.x <= L.right + L.gap && p.y >= L.rowY - L.gap && p.y <= L.rowY + L.ch + L.gap / 2) return 'stock';
+    const x0 = L.right - L.cw - 4 * L.offS, x1 = x0 + (L.piles - 1) * L.offS + L.cw;
+    if (p.x >= x0 - L.gap && p.x <= x1 + L.gap && p.y >= L.rowY - L.gap && p.y <= L.rowY + L.ch + L.gap / 2) return 'stock';
   }
   for (let c = 0; c < 10; c++) {
     const x = L.colX[c];
@@ -1098,7 +1098,7 @@ function tick(now) {
       const t = flash.target;
       if (t.type === 'card') { const q = L.pos[t.id]; gx = q.x; gy = q.y; }
       else if (t.type === 'slot') { gx = L.colX[t.c]; gy = L.top; }
-      else { gx = L.right - L.cw; gy = L.rowY; }
+      else { gx = L.right - L.cw - 4 * L.offS + (L.piles - 1) * L.offS; gy = L.rowY; }
       glow.position.set(gx + L.cw / 2, -(gy + L.ch / 2), 0);
       glow.scale.set(L.cw * HALO_X, L.ch * HALO_Y, 1);
       glow.material.opacity = 0.35 + 0.65 * p;
