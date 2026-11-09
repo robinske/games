@@ -658,8 +658,79 @@ function shuffle(a) {
   for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; }
   return a;
 }
+/* Easier deals: shuffle twice, quietly play each shuffle out with a quick greedy player, and deal
+   the one it gets further with (face-down cards turned over plus completed runs). Testing showed
+   this raises average progress without making every game a sure win. */
+const DEAL_CHOICES = 2;
+function trialScore(ids) {
+  const SU = id => Math.floor(id / 13) % 2, RK = id => id % 13 + 1;
+  const cols = Array.from({ length: 10 }, () => []); let p = 0;
+  for (let r = 0; r < 6; r++) for (let c = 0; c < 10; c++) { if (r === 5 && c >= 4) continue; cols[c].push(ids[p++]); }
+  const stock = ids.slice(p), up = new Uint8Array(104), seen = new Set();
+  cols.forEach(c => { up[c[c.length - 1]] = 1; });
+  let done = 0;
+  const run = (col, k) => {
+    if (!up[col[k]]) return false;
+    for (let j = k; j < col.length - 1; j++) { const a = col[j], b = col[j + 1]; if (!up[b] || SU(a) !== SU(b) || RK(a) !== RK(b) + 1) return false; }
+    return true;
+  };
+  const key = () => cols.map(c => c.join(',')).join('|') + '#' + stock.length;
+  for (let step = 0; step < 4000; step++) {
+    for (const col of cols) {
+      const n = col.length;
+      if (n >= 13 && RK(col[n - 13]) === 13 && run(col, n - 13)) { col.splice(n - 13); done++; if (col.length) up[col[col.length - 1]] = 1; }
+    }
+    if (done === 8) break;
+    seen.add(key());
+    let best = null, bs = -1;
+    const empty = cols.findIndex(c => !c.length);
+    for (let c = 0; c < 10; c++) {
+      const col = cols[c]; if (!col.length) continue;
+      let rs = col.length - 1; while (rs > 0 && run(col, rs - 1)) rs--;
+      for (let k = rs; k < col.length; k++) {
+        const lead = col[k], below = k > 0 ? col[k - 1] : -1;
+        const bDown = below >= 0 && !up[below];
+        const onAny = below >= 0 && up[below] && RK(below) === RK(lead) + 1;
+        if (onAny && SU(below) === SU(lead)) continue;
+        for (let d = 0; d < 10; d++) {
+          if (d === c || !cols[d].length) continue;
+          const top = cols[d][cols[d].length - 1];
+          if (RK(top) !== RK(lead) + 1) continue;
+          const same = SU(top) === SU(lead);
+          if ((onAny || k !== rs) && !same) continue;
+          const s = (same ? 30 + col.length - k : 10) + (bDown ? 25 : 0) + (k === 0 ? 15 : 0);
+          if (s > bs) { best = [c, k, d]; bs = s; }
+        }
+        if (empty >= 0 && k > 0 && k === rs && !onAny) { const s = bDown ? 12 : 1; if (s > bs) { best = [c, k, empty]; bs = s; } }
+      }
+    }
+    let moved = false;
+    if (best) {
+      const [c, k, d] = best, m = cols[c].splice(k); cols[d].push(...m);
+      const src = cols[c]; let flip = false;
+      if (src.length && !up[src[src.length - 1]]) { up[src[src.length - 1]] = 1; flip = true; }
+      if (!flip && seen.has(key())) cols[c].push(...cols[d].splice(cols[d].length - m.length)); else moved = true;
+    }
+    if (!moved) {
+      if (!stock.length) break;
+      for (let c = 0; c < 10; c++) { const id = stock.pop(); up[id] = 1; cols[c].push(id); }
+    }
+  }
+  let down = 0; cols.forEach(c => c.forEach(id => { if (!up[id]) down++; }));
+  return (44 - down) + 13 * done;
+}
+function friendlierDeal() {
+  let best = null, bestScore = -1;
+  for (let i = 0; i < DEAL_CHOICES; i++) {
+    const ids = shuffle([...Array(104).keys()]);
+    const s = trialScore(ids);
+    if (s > bestScore) { bestScore = s; best = ids; }
+  }
+  return best;
+}
+
 function newGame() {
-  const ids = shuffle([...Array(104).keys()]);
+  const ids = friendlierDeal();
   C.forEach(c => { c.up = false; });
   S = { cols: Array.from({ length: 10 }, () => []), stock: [], done: [], score: 500, moves: 0, won: false };
   let p = 0;
