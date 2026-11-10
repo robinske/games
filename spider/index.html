@@ -154,7 +154,7 @@ button.solve:hover { background: #eef5ec; }
 <div id="app">
   <header class="top gutter">
     <div class="stat"><span class="lab">Moves</span><span id="moves" class="val">0</span></div>
-    <div class="stat main"><span id="score" class="val">500</span><span class="ver" title="Game version">v9 · Nov 9</span></div>
+    <div class="stat main"><span id="score" class="val">500</span><span class="ver" title="Game version">v10 · Nov 9</span></div>
     <div class="stat"><span class="lab">Runs</span><span id="runs" class="val">0/8</span></div>
   </header>
   <main id="stage">
@@ -824,7 +824,23 @@ function hints() {
     for (let k = 0; k < col.length; k++) {
       if (!isRun(col, k)) continue;
       const lead = C[col[k]], below = k > 0 ? C[col[k - 1]] : null;
-      if (below && below.up && below.rank === lead.rank + 1 && below.suit === lead.suit) continue;
+      if (below && below.up && below.rank === lead.rank + 1 && below.suit === lead.suit) {
+        // Splitting a same-suit stretch only helps if the cards join a longer same-suit stretch,
+        // e.g. 7-6-5 of hearts moving from one 8 of hearts to an 8 that sits under K-Q-J-10-9.
+        const sameRun = (cl, j) => { const a = C[cl[j]], b = C[cl[j + 1]]; return a.up && b.up && a.suit === b.suit && a.rank === b.rank + 1; };
+        let s0 = k; while (s0 > 0 && sameRun(col, s0 - 1)) s0--;
+        const srcLen = col.length - s0, moving = col.length - k;
+        for (let d = 0; d < 10; d++) {
+          const dc = S.cols[d];
+          if (d === c || !dc.length) continue;
+          const top = C[dc[dc.length - 1]];
+          if (!top.up || top.suit !== lead.suit || top.rank !== lead.rank + 1) continue;
+          let d0 = dc.length - 1; while (d0 > 0 && sameRun(dc, d0 - 1)) d0--;
+          const joined = dc.length - d0 + moving;
+          if (joined > srcLen) list.push({ c, k, d, score: joined >= 13 ? 3.5 : 2 + joined * 0.01 });
+        }
+        continue;
+      }
       const sitsOnAny = below && below.up && below.rank === lead.rank + 1;
       for (let d = 0; d < 10; d++) {
         if (d === c || !S.cols[d].length) continue;
