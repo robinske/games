@@ -144,6 +144,8 @@ button.solve:hover { background: #eef5ec; }
    home-indicator padding so the buttons don't float high above it. */
 @media (display-mode: standalone) {
   header.top { padding-top: 30px; }
+  /* dim the whole screen behind panels, including the strip iOS leaves below the reported viewport */
+  .overlay { bottom: auto; height: 100vh; min-height: 100%; }
 }
 :root.short-viewport { padding-bottom: 0 !important; }
 :root.short-viewport nav.controls { padding-bottom: 8px; }
@@ -154,7 +156,7 @@ button.solve:hover { background: #eef5ec; }
 <div id="app">
   <header class="top gutter">
     <div class="stat"><span class="lab">Moves</span><span id="moves" class="val">0</span></div>
-    <div class="stat main"><span id="score" class="val">500</span><span class="ver" title="Game version">v11 · Nov 10</span></div>
+    <div class="stat main"><span id="score" class="val">500</span><span class="ver" title="Game version">v12 · Nov 10</span></div>
     <div class="stat"><span class="lab">Runs</span><span id="runs" class="val">0/8</span></div>
   </header>
   <main id="stage">
