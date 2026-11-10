@@ -154,7 +154,7 @@ button.solve:hover { background: #eef5ec; }
 <div id="app">
   <header class="top gutter">
     <div class="stat"><span class="lab">Moves</span><span id="moves" class="val">0</span></div>
-    <div class="stat main"><span id="score" class="val">500</span><span class="ver" title="Game version">v10 · Nov 9</span></div>
+    <div class="stat main"><span id="score" class="val">500</span><span class="ver" title="Game version">v11 · Nov 10</span></div>
     <div class="stat"><span class="lab">Runs</span><span id="runs" class="val">0/8</span></div>
   </header>
   <main id="stage">
@@ -798,8 +798,22 @@ function undo() {
   clearFlash();
   sync(); hud(); save();
 }
+// Length of the same-suit, descending, face-up stretch that ends at the bottom of a column.
+function sameSuitTail(col) {
+  if (!col.length || !C[col[col.length - 1]].up) return 0;
+  let n = 1;
+  for (let j = col.length - 2; j >= 0; j--) {
+    const a = C[col[j]], b = C[col[j + 1]];
+    if (!a.up || a.suit !== b.suit || a.rank !== b.rank + 1) break;
+    n++;
+  }
+  return n;
+}
+// Where a tapped stack goes: a spot that completes a K-to-A run first, then the same-suit spot that
+// builds the longest same-suit stretch, then any matching card, then an empty column. Ties go to the
+// nearest column.
 function bestDest(c, k) {
-  const lead = C[S.cols[c][k]];
+  const lead = C[S.cols[c][k]], moving = S.cols[c].length - k;
   let best = -1, bestP = 0, bestDist = 99;
   for (let d = 0; d < 10; d++) {
     if (d === c) continue;
@@ -807,7 +821,12 @@ function bestDest(c, k) {
     if (!col.length) p = k > 0 ? 1 : 0;
     else {
       const top = C[col[col.length - 1]];
-      if (top.up && top.rank === lead.rank + 1) p = top.suit === lead.suit ? 3 : 2;
+      if (top.up && top.rank === lead.rank + 1) {
+        if (top.suit === lead.suit) {
+          const joined = sameSuitTail(col) + moving;
+          p = joined >= 13 ? 1000 : 100 + joined;
+        } else p = 10;
+      }
     }
     const dist = Math.abs(d - c);
     if (p > bestP || (p === bestP && p > 0 && dist < bestDist)) { best = d; bestP = p; bestDist = dist; }
@@ -849,6 +868,7 @@ function hints() {
         const same = top.suit === lead.suit;
         if (sitsOnAny && !same) continue;
         let score = same ? 3 : 1;
+        if (same) { const joined = sameSuitTail(S.cols[d]) + col.length - k; score += joined >= 13 ? 5 : joined * 0.08; }
         if (below && !below.up) score += 4;
         if (!below) score += 2;
         score += (col.length - k) * 0.05;
